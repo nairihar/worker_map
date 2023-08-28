@@ -48,6 +48,7 @@ const account = ThreadShare.createSharedObject();
 
 // Modify the shared object
 account.owner = 'Elon';
+account.balance = 0;
 
 // Create a worker thread and pass the shared object to it
 const worker = new Worker('worker.js', {
@@ -67,7 +68,7 @@ const account = ThreadShare.getSharedObject(workerData.sharedAccount);
 // Access and modify the shared object
 console.log(account.owner); // Output: 'Elon'
 
-account.balance = 1000;
+account.balance += 1000;
 
 // The change in balance will also be reflected in the main process
 ```
