@@ -69,3 +69,22 @@ account.balance = 1000;
 
 // The change in balance will also be reflected in the main process
 ```
+
+## Limitations and Considerations
+
+- **Single Level Objects**: ThreadShare is designed to work with one level objects. Nested objects and arrays are not supported directly within shared objects. You can, however, create fields that hold other objects inside the shared object.
+
+- **Reference Handling**: JavaScript does not allow direct manipulation of references. As a result, ThreadShare doesn't directly handle references to nested objects or arrays. Be aware of this limitation when designing your shared objects.
+
+- **Accessing Shared Data**: When logging a shared object, you won't see the complete output. To access the actual shared data, access the $target field of the shared object. For shared arrays, you can access the underlying SharedArrayBuffer using the $buffer field.
+
+### Accessing Plain Object and SharedArrayBuffer
+
+```js
+// Accessing the plain object inside a shared object
+const plainObject = sharedObject.$target;
+
+// Accessing the SharedArrayBuffer inside a shared array
+const sharedArrayBuffer = sharedArray.$buffer;
+```
+
