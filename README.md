@@ -76,7 +76,7 @@ account.balance = 1000;
 
 - **Reference Handling**: JavaScript does not allow direct manipulation of references. As a result, ThreadShare doesn't directly handle references to nested objects or arrays. Be aware of this limitation when designing your shared objects.
 
-- **Accessing Shared Data**: When logging a shared object, you won't see the complete output. To access the actual shared data, access the $target field of the shared object. For shared arrays, you can access the underlying SharedArrayBuffer using the $buffer field.
+- **Accessing Shared Data**: When logging a shared object, you won't see the complete output. To access the actual shared data, access the `$target` field of the shared object. For shared arrays, you can access the underlying `SharedArrayBuffer` using the `$buffer` field.
 
 ### Accessing Plain Object and SharedArrayBuffer
 
@@ -87,4 +87,18 @@ const plainObject = sharedObject.$target;
 // Accessing the SharedArrayBuffer inside a shared array
 const sharedArrayBuffer = sharedArray.$buffer;
 ```
+
+## How ThreadShare Works Internally
+
+ThreadShare employs an internal mechanism to manage shared data and ensure synchronization between the main process and worker threads. This section provides insights into the underlying workflow of the library.
+
+1. **Locking Shared Memory**: Every time you attempt to access or modify a field within a shared object, ThreadShare initiates a process to lock the shared memory. This prevents other threads from accessing the memory simultaneously, reducing the risk of data corruption or race conditions.
+
+2. **Serialization to String**: To effectively manage data sharing, ThreadShare internally serializes the shared object's data as a string representation. This string representation contains the entire state of the shared object, including its custom fields.
+
+3. **Storage as Numbers**: The serialized string representation is then converted into an array of numbers using an Int32Array. This array of numbers, representing the serialized data, is stored in the underlying shared memory.
+
+4. **Access and Modification**: When you access a field within the shared object, ThreadShare locks the memory, decodes the stored numbers to reconstruct the serialized string, and parses this string to recreate the object. The requested field's value is then retrieved or modified accordingly.
+
+5. **Unlocking Shared Memory**: After accessing or modifying the shared object's fields, ThreadShare releases the memory lock, allowing other threads to access the shared memory area.
 
