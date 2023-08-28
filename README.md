@@ -68,7 +68,7 @@ const account = ThreadShare.getSharedObject(workerData.sharedAccount);
 // Access and modify the shared object
 console.log(account.owner); // Output: 'Elon'
 
-account.balance += 1000;
+account.balance += 100;
 
 // The change in balance will also be reflected in the main process
 ```
