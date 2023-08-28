@@ -17,8 +17,7 @@ ThreadShare enables you to create shared objects that can be accessed by both th
 ```js
 // main.js
 const ThreadShare = require('threadshare');
-const sharedAccount = ThreadShare.createSharedObject();
-});
+const account = ThreadShare.createSharedObject();
 ```
 
 ### Accessing a Shared Object in a Worker Thread
@@ -31,7 +30,7 @@ const ThreadShare = require('threadshare');
 const { workerData } = require('worker_threads');
 
 // Inside the worker thread
-const sharedAccount = ThreadShare.getSharedObject(workerData.account);
+const account = ThreadShare.getSharedObject(workerData.sharedAccount);
 ```
 
 ### Communication Between Main Process and Worker Thread
@@ -41,14 +40,14 @@ Using ThreadShare's shared objects, you can easily communicate and share data be
 **main.js**
 ```js
 const ThreadShare = require('threadshare');
+const { Worker } = require('worker_threads');
 
-const sharedAccount = ThreadShare.createSharedObject();
+const account = ThreadShare.createSharedObject();
 
 // Modify the shared object
-sharedAccount.owner = 'Elon';
+account.owner = 'Elon';
 
 // Create a worker thread and pass the shared object to it
-const { Worker } = require('worker_threads');
 const worker = new Worker('worker.js', {
   workerData: {
     sharedAccount: account.$buffer,
@@ -61,12 +60,12 @@ const worker = new Worker('worker.js', {
 const ThreadShare = require('threadshare');
 const { workerData } = require('worker_threads');
 
-const sharedAccount = ThreadShare.getSharedObject(workerData.sharedAccount);
+const account = ThreadShare.getSharedObject(workerData.sharedAccount);
 
 // Access and modify the shared object
-console.log(sharedAccount.owner); // Output: 'Elon'
+console.log(account.owner); // Output: 'Elon'
 
-sharedAccount.balance = 1000;
+account.balance = 1000;
 
 // The change in balance will also be reflected in the main process
 ```
