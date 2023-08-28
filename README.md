@@ -14,7 +14,7 @@ npm i -S threadshare
 
 ThreadShare enables you to create shared objects that can be accessed by both the main process and worker threads. To create a shared object, use the createSharedObject method:
 
-```nodejs
+```js
 // main.js
 const ThreadShare = require('threadshare');
 const sharedAccount = ThreadShare.createSharedObject();
@@ -25,7 +25,7 @@ const sharedAccount = ThreadShare.createSharedObject();
 
 To access a shared object within a worker thread, you need to retrieve it using the getSharedObject method and providing the shared object identifier:
 
-```nodejs
+```js
 // worker.js
 const ThreadShare = require('threadshare');
 const { workerData } = require('worker_threads');
@@ -39,7 +39,7 @@ const sharedAccount = ThreadShare.getSharedObject(workerData.account);
 Using ThreadShare's shared objects, you can easily communicate and share data between the main process and worker threads. Any modifications made to the shared object are automatically synchronized across all threads.
 
 **main.js**
-```nodejs
+```js
 const ThreadShare = require('threadshare');
 
 const sharedAccount = ThreadShare.createSharedObject();
@@ -57,7 +57,7 @@ const worker = new Worker('worker.js', {
 ```
 
 **worker.js**
-```nodejs
+```js
 const ThreadShare = require('threadshare');
 const { workerData } = require('worker_threads');
 
