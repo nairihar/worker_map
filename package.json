@@ -1,7 +1,7 @@
 {
     "name": "threadshare",
     "description": "Simplify inter-thread data sharing in Node.js worker_threads with ThreadShare.",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "main": "./src/threadshare.js",
     "scripts": {
       "test": "echo \"Error: no test specified\" && exit 1"
