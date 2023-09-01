@@ -1,0 +1,24 @@
+{
+    "name": "threadshare",
+    "description": "Simplify inter-thread data sharing in Node.js worker_threads with ThreadShare.",
+    "version": "1.0.0",
+    "main": "./src/threadshare.js",
+    "scripts": {
+      "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "homepage": "https://github.com/nairihar/threadshare",
+    "keywords": [
+      "worker threads",
+      "multithreading",
+      "shared objects",
+      "synchronization",
+      "threading",
+      "data sharing",
+      "multithreaded applications",
+      "distributed computing",
+      "thread safety"
+    ],
+    "author": "Nairi Harutyunyan",
+    "license": "MIT"
+  }
+  
