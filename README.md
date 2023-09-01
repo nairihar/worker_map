@@ -2,17 +2,15 @@
 
 ThreadShare is a JavaScript library that provides an abstraction for Node.js `worker_threads`, allowing you to create and share objects between worker threads and the main process. This simplifies the process of managing shared data and communication between threads.
 
-![](https://topentol.sirv.com/github/share_thread.png)
-
 ## Installation
 
 ```
-npm i -S threadshare
+npm i threadshare
 ```
 
 ## Getting Started
 
-### Creating a Shared Object
+### Creating a **shared object**
 
 ThreadShare enables you to create shared objects that can be accessed by both the main process and worker threads. To create a shared object, use the createSharedObject method:
 
@@ -22,7 +20,7 @@ const ThreadShare = require('threadshare');
 const account = ThreadShare.createSharedObject();
 ```
 
-### Accessing a Shared Object in a Worker Thread
+### Accessing a **shared object** in a Worker Thread
 
 To access a shared object within a worker thread, you need to retrieve it using the getSharedObject method and providing the shared object identifier:
 
@@ -35,9 +33,13 @@ const { workerData } = require('worker_threads');
 const account = ThreadShare.getSharedObject(workerData.sharedAccount);
 ```
 
-### Communication Between Main Process and Worker Thread
+### Communication between Threads
 
-Using ThreadShare's shared objects, you can easily communicate and share data between the main process and worker threads. Any modifications made to the shared object are automatically synchronized across all threads.
+Using ThreadShare's shared objects, you can easily communicate and share data between the main process and worker threads.
+
+![](https://topentol.sirv.com/github/share_thread.png)
+
+Any modifications made to the shared object are automatically synchronized across all threads.
 
 **main.js**
 ```js
@@ -75,7 +77,7 @@ account.balance += 100;
 
 ## Limitations and Considerations
 
-- **Single Level Objects**: ThreadShare is designed to work with one level objects. Nested objects and arrays are not supported directly within shared objects. You can, however, create fields that hold other objects inside the shared object.
+- **Single Level Objects**: ThreadShare is designed to work with one-level objects. Nested objects and arrays are not supported directly within shared objects. You can, however, create fields that hold other objects inside the shared object.
 
 - **Reference Handling**: JavaScript does not allow direct manipulation of references. As a result, ThreadShare doesn't directly handle references to nested objects or arrays. Be aware of this limitation when designing your shared objects.
 
@@ -99,9 +101,57 @@ ThreadShare employs an internal mechanism to manage shared data and ensure synch
 
 2. **Serialization to String**: To effectively manage data sharing, ThreadShare internally serializes the shared object's data as a string representation. This string representation contains the entire state of the shared object, including its custom fields.
 
-3. **Storage as Numbers**: The serialized string representation is then converted into an array of numbers using an Int32Array. This array of numbers, representing the serialized data, is stored in the underlying shared memory.
+3. **Storage as Numbers**: The serialized string representation is then converted into an array of numbers using an `Int32Array`. This array of numbers, representing the serialized data, is stored in the underlying shared memory.
 
 4. **Access and Modification**: When you access a field within the shared object, ThreadShare locks the memory, decodes the stored numbers to reconstruct the serialized string, and parses this string to recreate the object. The requested field's value is then retrieved or modified accordingly.
 
 5. **Unlocking Shared Memory**: After accessing or modifying the shared object's fields, ThreadShare releases the memory lock, allowing other threads to access the shared memory area.
 
+## API
+
+### `createSharedObject(size)`
+
+This method will create a shared object, and return a JavaScript object.
+
+The library determines the amount of memory to allocate based on the size parameter. By default, the size is set to `1000`, meaning that the stringified version of your shared object should not exceed this length.
+
+You have the option to specify the size when you create the shared object; however, it's important to note that you won't be able to modify it later on.
+
+### `getSharedObject()`
+
+Reads shared memory and returns a JavaScript object.
+
+### Shared object
+
+This is a one-level object which allows you to create, get, edit, and delete fields.
+
+```js
+const sharedObject = ThreadShare.createSharedObject(300);
+
+console.log(sharedObject);
+console.log(sharedObject.$buffer);
+```
+
+In contrast to JavaScript native objects, it incorporates two additional fields originating from the library.
+
+#### `sharedObject.$target`
+
+This is a pure JavaScript object that offers a duplicate of the shared object. You can use it for various purposes, including logging or any other specific use cases.
+Please be aware that logging the shared object is not feasible, as it significantly differs from the native object.
+
+```js
+console.log(sharedObject.$target); // { ... }
+```
+
+#### `sharedObject.$buffer`
+
+
+When you intend to create a new worker and supply initial data, for shared objects, you must provide the actual SharedArrayBuffer reference. You can locate the corresponding reference or buffer of your shared object within the $buffer field.
+
+```js
+const worker = new Worker('worker.js', {
+  workerData: {
+    sharedAccount: sharedObject.$buffer,
+  }
+});
+```
