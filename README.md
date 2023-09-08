@@ -1,3 +1,8 @@
+![](https://img.shields.io/badge/dependencies-none-brightgreen.svg)
+![](https://img.shields.io/npm/dt/threadshare.svg)
+![](https://img.shields.io/npm/l/threadshare.svg)
+[![Known Vulnerabilities](https://snyk.io/test/github/nairihar/threadshare/badge.svg)](https://snyk.io/test/github/nairihar/funthreads)
+
 # threadshare
 
 ThreadShare is a JavaScript library that provides an abstraction for Node.js `worker_threads`, allowing you to create and share objects between worker threads and the main process. This simplifies the process of managing shared data and communication between threads.
@@ -8,25 +13,26 @@ ThreadShare is a JavaScript library that provides an abstraction for Node.js `wo
 npm i threadshare
 ```
 
-## Getting Started
-
-### Creating a **shared object**
+## Basic Example
 
 ThreadShare enables you to create shared objects that can be accessed by both the main process and worker threads. To create a shared object, use the createSharedObject method:
 
+**Creating a shared object**
 ```js
 // main.js
 const ThreadShare = require('threadshare');
+
 const account = ThreadShare.createSharedObject(); // {}
+
+// ...
 
 setTimeout(() => {
   console.log(account.owner); // 'elon'
 }, 50);
 ```
 
-### Accessing a **shared object** in a Worker Thread
-
 To access a shared object within a worker thread, you need to retrieve it using the getSharedObject method and providing the shared object identifier:
+**Accessing the shared object in a Worker Thread**
 
 ```js
 // worker.js
@@ -41,11 +47,13 @@ account.owner = 'Elon';
 
 ### Communication between Threads
 
-Using ThreadShare's shared objects, you can easily communicate and share data between the main process and worker threads.
+Using ThreadShare's shared objects, you can easily communicate and share data(`object`) between the main process and worker threads.
 
 ![](https://topentol.sirv.com/github/share_thread.png)
 
-Any modifications made to the shared object are automatically synchronized across all threads.
+Any modifications made to the shared object are automatically synchronized across all threads and vice versa.
+
+## Complete example
 
 **main.js**
 ```js
@@ -115,13 +123,17 @@ ThreadShare employs an internal mechanism to manage shared data and ensure synch
 
 ## API
 
-### `createSharedObject(size)`
+### `createSharedObject(length)`
 
 This method will create a shared object, and return a JavaScript object.
 
-The library determines the amount of memory to allocate based on the size parameter. By default, the size is set to `1000`, meaning that the stringified version of your shared object should not exceed this length.
+The library determines the amount of memory to allocate based on the length parameter. By default, the length is set to `1000`, meaning that the stringified version of your shared object should not exceed this length.
+Internaly for each item library uses `Int32Array` which makes shared buffer's total size `4 * 1000 bytes`.
 
-You have the option to specify the size when you create the shared object; however, it's important to note that you won't be able to modify it later on.
+You have the option to specify the length when you create the shared object; however, it's important to note that you won't be able to modify it later on.
+
+**For Node.js >= V20**
+When interacting with the object, as you set and update its fields and values, the shared buffer will automatically expand to accommodate additional data. In this case max shared buffer's total size is `4 * 10000 bytes`.
 
 ### `getSharedObject()`
 

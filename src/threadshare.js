@@ -3,7 +3,8 @@ const encoder = new TextEncoder('utf8');
 
 const { lock, unlock, UNLCOKED } = require('./mutex');
 
-const DEFAULT_OBJECT_SIZE = 1000; // total characters of stringified object
+const DEFAULT_OBJECT_BYTE_LENGTH = 1000; // total characters of stringified object
+const MAX_OBJECT_BYTE_LENGTH = 10000; // max characters length for the stringified object
 
 function getSharedMemoryBuffer(sharedBuffer) {
     return new Int32Array(sharedBuffer);
@@ -45,6 +46,19 @@ function saveObjectInBuffer(sharedObject, valueBuffer) {
     }
 }
 
+function adjustSharedBufferGrow(sharedBuffer, sharedObject) {
+    const objectByteLength = JSON.stringify(sharedObject).length * Int32Array.BYTES_PER_ELEMENT;
+
+    const diff = sharedBuffer.byteLength - objectByteLength;
+
+    if (diff <= 0) {
+        if (!sharedBuffer.grow) {
+            throw new Error('No more space, create a new bigger shared object or use Node >= v20 to support auto grow.');
+        }
+        sharedBuffer.grow(sharedBuffer.byteLength + Math.abs(diff) + 10);
+    }
+}
+
 function creteObjectProxyHandlers(sharedBuffer, valueBuffer) {
     return {
         set(objectProxy, prop, value) {
@@ -55,7 +69,10 @@ function creteObjectProxyHandlers(sharedBuffer, valueBuffer) {
             lock(valueBuffer);
 
             const sharedObject = loadPlainSharedObject(valueBuffer)
+            
             sharedObject[prop] = value;
+
+            adjustSharedBufferGrow(sharedBuffer, sharedObject);
 
             saveObjectInBuffer(sharedObject, valueBuffer);
 
@@ -83,8 +100,10 @@ function creteObjectProxyHandlers(sharedBuffer, valueBuffer) {
     };
 }
 
-function createSharedObject(size=DEFAULT_OBJECT_SIZE) {
-    const sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * size);
+function createSharedObject(length=DEFAULT_OBJECT_BYTE_LENGTH) {
+    const sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length, {
+        maxByteLength: MAX_OBJECT_BYTE_LENGTH,
+    });
     const valueBuffer = getSharedMemoryBuffer(sharedBuffer);
 
     valueBuffer[0] = UNLCOKED; // first value used for locking and unlocking
