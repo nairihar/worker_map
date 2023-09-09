@@ -3,8 +3,8 @@ const encoder = new TextEncoder('utf8');
 
 const { lock, unlock, UNLCOKED } = require('./mutex');
 
-const DEFAULT_OBJECT_BYTE_LENGTH = 1000; // total characters of stringified object
-const MAX_OBJECT_BYTE_LENGTH = 10000; // max characters length for the stringified object
+const DEFAULT_OBJECT_BYTE_LENGTH = 1024; // total characters of stringified object (2^10)
+const MAX_OBJECT_BYTE_LENGTH = 4294967296; // max characters length for the stringified object (2^32)
 
 function getSharedMemoryBuffer(sharedBuffer) {
     return new Int32Array(sharedBuffer);
@@ -32,30 +32,39 @@ function loadPlainSharedObject(valueBuffer) {
     );
 }
 
+function calculateStringByteLength(string) {
+    return encoder.encode(string).length;
+}
+
 function saveObjectInBuffer(sharedObject, valueBuffer) {
     const objString = JSON.stringify(sharedObject);
-    const encodeBuffer = new Uint8Array(objString.length);
+    const stringByteLength = calculateStringByteLength(objString);
+    const encodeBuffer = new Uint8Array(stringByteLength);
     encoder.encodeInto(objString, encodeBuffer)
 
-    for (let i = 0; i < objString.length; i++) {
+    for (let i = 0; i < stringByteLength; i++) {
         valueBuffer[i + 1] = encodeBuffer[i];
     }
 
-    for (let j = objString.length + 1; j < valueBuffer.length; j++) {
+    for (let j = stringByteLength + 1; j < valueBuffer.length; j++) {
         valueBuffer[j] = 0;
     }
 }
 
 function adjustSharedBufferGrow(sharedBuffer, sharedObject) {
-    const objectByteLength = JSON.stringify(sharedObject).length * Int32Array.BYTES_PER_ELEMENT;
+    const objectByteLength = calculateStringByteLength(JSON.stringify(sharedObject));
+    const diff = (sharedBuffer.byteLength / 4) - objectByteLength;
 
-    const diff = sharedBuffer.byteLength - objectByteLength;
 
     if (diff <= 0) {
         if (!sharedBuffer.grow) {
             throw new Error('No more space, create a new bigger shared object or use Node >= v20 to support auto grow.');
         }
-        sharedBuffer.grow(sharedBuffer.byteLength + Math.abs(diff) + 10);
+
+        // byte length of Int32Array should be a multiple of 4
+        let growedLength = sharedBuffer.byteLength + (4 * Math.abs(diff)) + 64;
+
+        sharedBuffer.grow(growedLength);
     }
 }
 

@@ -7,6 +7,7 @@ account.owner = 'Elon';
 account.wallets_usd_bank = 100;
 account.wallets_eth = 0;
 account.wallets_doge = 0;
+account.armenian_name = 'Էլոն Մասկ';
 
 setInterval(() => {
     account.wallets_usd_bank -= 1;
