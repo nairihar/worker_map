@@ -19,16 +19,21 @@ ThreadShare enables you to create shared objects that can be accessed by both th
 
 **Creating a shared object**
 ```js
-// main.js
 const ThreadShare = require('threadshare');
+const { Worker } = require('worker_threads');
 
-const account = ThreadShare.createSharedObject(); // {}
+const account = ThreadShare.createSharedObject({
+    owner: 'Elon',
+});
 
-// ...
+account.balance = 0;
 
-setTimeout(() => {
-  console.log(account.owner); // 'elon'
-}, 50);
+// Create a worker thread and pass the shared object to it
+const worker = new Worker('worker.js', {
+  workerData: {
+    sharedAccount: account.$buffer,
+  },
+});
 ```
 
 To access a shared object within a worker thread, you need to retrieve it using the getSharedObject method and providing the shared object identifier:
@@ -39,10 +44,12 @@ To access a shared object within a worker thread, you need to retrieve it using 
 const ThreadShare = require('threadshare');
 const { workerData } = require('worker_threads');
 
-// Inside the worker thread
-const account = ThreadShare.getSharedObject(workerData.sharedAccount); // {}
+const account = ThreadShare.getSharedObject(workerData.sharedAccount);
 
-account.owner = 'Elon';
+console.log(account.owner); // 'Elon'
+
+// The change in balance will also be reflected in the main process
+account.balance += 100;
 ```
 
 ### Communication between Threads
@@ -52,42 +59,6 @@ Using ThreadShare's shared objects, you can easily communicate and share data(`o
 ![](https://topentol.sirv.com/github/share_thread.png)
 
 Any modifications made to the shared object are automatically synchronized across all threads and vice versa.
-
-## Complete example
-
-**main.js**
-```js
-const ThreadShare = require('threadshare');
-const { Worker } = require('worker_threads');
-
-const account = ThreadShare.createSharedObject();
-
-// Modify the shared object
-account.owner = 'Elon';
-account.balance = 0;
-
-// Create a worker thread and pass the shared object to it
-const worker = new Worker('worker.js', {
-  workerData: {
-    sharedAccount: account.$buffer,
-  }
-});
-```
-
-**worker.js**
-```js
-const ThreadShare = require('threadshare');
-const { workerData } = require('worker_threads');
-
-const account = ThreadShare.getSharedObject(workerData.sharedAccount);
-
-// Access and modify the shared object
-console.log(account.owner); // Output: 'Elon'
-
-account.balance += 100;
-
-// The change in balance will also be reflected in the main process
-```
 
 ## Limitations and Considerations
 
@@ -123,17 +94,19 @@ ThreadShare employs an internal mechanism to manage shared data and ensure synch
 
 ## API
 
-### `createSharedObject(length)`
+### `createSharedObject(initialObject={}, length=2^12)`
 
 This method will create a shared object, and return a JavaScript object.
 
-The library determines the amount of memory to allocate based on the length parameter. By default, the length is set to `1000`, meaning that the stringified version of your shared object should not exceed this length.
-Internaly for each item library uses `Int32Array` which makes shared buffer's total size `4 * 1000 bytes`.
+When creating a new shared object, we have the option to specify the initial object we want to store in memory. By default, the library allocates four times more memory in case we need to make future modifications.
 
-You have the option to specify the length when you create the shared object; however, it's important to note that you won't be able to modify it later on.
+The library also determines the amount of memory to allocate based on the `length` parameter. By default, the length is set to `4096`, meaning that the stringified version of your shared object should not exceed this length.
+Internaly for each item library uses `Int32Array` which makes shared buffer's total size `4 * 4096 bytes`.
+
+You have the option to specify the length when you create the shared object; however, it's important to note that you won't be able to modify it later on. `length` value should be a **multiple of 4**.
 
 **For Node.js >= V20**
-When interacting with the object, as you set and update its fields and values, the shared buffer will automatically expand to accommodate additional data. In this case max shared buffer's total size is `4 * 10000 bytes`.
+When interacting with the object, as you set and update its fields and values, the shared buffer will automatically expand to accommodate additional data. In this case max shared buffer's total size is `2^32 (4294967296) bytes`.
 
 ### `getSharedObject()`
 

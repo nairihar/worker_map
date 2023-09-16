@@ -3,7 +3,7 @@ const encoder = new TextEncoder('utf8');
 
 const { lock, unlock, UNLCOKED } = require('./mutex');
 
-const DEFAULT_OBJECT_BYTE_LENGTH = 1024; // total characters of stringified object (2^10)
+const DEFAULT_OBJECT_BYTE_LENGTH = 4096; // total characters of stringified object (2^12)
 const MAX_OBJECT_BYTE_LENGTH = 4294967296; // max characters length for the stringified object (2^32)
 
 function getSharedMemoryBuffer(sharedBuffer) {
@@ -36,8 +36,9 @@ function calculateStringByteLength(string) {
     return encoder.encode(string).length;
 }
 
-function saveObjectInBuffer(sharedObject, valueBuffer) {
-    const objString = JSON.stringify(sharedObject);
+function saveObjectInBuffer(sharedObject, valueBuffer, objString) {
+    objString ??= JSON.stringify(sharedObject);
+
     const stringByteLength = calculateStringByteLength(objString);
     const encodeBuffer = new Uint8Array(stringByteLength);
     encoder.encodeInto(objString, encodeBuffer)
@@ -109,7 +110,15 @@ function creteObjectProxyHandlers(sharedBuffer, valueBuffer) {
     };
 }
 
-function createSharedObject(length=DEFAULT_OBJECT_BYTE_LENGTH) {
+function createSharedObject(initialObject={}, length=DEFAULT_OBJECT_BYTE_LENGTH) {
+    const stringifiedObject = JSON.stringify(initialObject);
+
+    length += length % 4; // should be a multiple of 4
+
+    if (stringifiedObject.length >= length) {
+        length = 4 * stringifiedObject.length;
+    }
+
     const sharedBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * length, {
         maxByteLength: MAX_OBJECT_BYTE_LENGTH,
     });
@@ -117,13 +126,11 @@ function createSharedObject(length=DEFAULT_OBJECT_BYTE_LENGTH) {
 
     valueBuffer[0] = UNLCOKED; // first value used for locking and unlocking
 
-    const emptySharedObject = {};
-
-    saveObjectInBuffer(emptySharedObject, valueBuffer);
+    saveObjectInBuffer(null, valueBuffer, stringifiedObject);
 
     const handlers = creteObjectProxyHandlers(sharedBuffer, valueBuffer);
 
-    return new Proxy(emptySharedObject, handlers);
+    return new Proxy(initialObject, handlers);
 }
 
 function getSharedObject(sharedBuffer) {

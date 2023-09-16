@@ -1,11 +1,12 @@
 const ThreadShare = require('threadshare');
 const { Worker } = require('worker_threads');
 
-const account = ThreadShare.createSharedObject();
+const account = ThreadShare.createSharedObject({
+    owner: 'Elon',
+    wallets_usd_bank: 100,
+    wallets_eth: 0,
+});
 
-account.owner = 'Elon';
-account.wallets_usd_bank = 100;
-account.wallets_eth = 0;
 account.wallets_doge = 0;
 account.armenian_name = 'Էլոն Մասկ';
 
