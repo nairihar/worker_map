@@ -24,7 +24,7 @@ const ThreadShare = require('threadshare');
 const { Worker } = require('worker_threads');
 
 const account = ThreadShare.createSharedObject({
-    owner: 'Elon',
+  owner: 'Elon',
 });
 
 account.balance = 0;
@@ -37,8 +37,8 @@ const worker = new Worker('./worker.js', {
 });
 
 setInterval(() => {
-    console.log(account.balance); // 100
-    process.exit(0);
+  console.log(account.balance); // 100
+  process.exit(0);
 }, 30);
 ```
 
