@@ -19,6 +19,7 @@ ThreadShare enables you to create shared objects that can be accessed by both th
 
 **Creating a shared object**
 ```js
+// main.js
 const ThreadShare = require('threadshare');
 const { Worker } = require('worker_threads');
 
@@ -29,11 +30,16 @@ const account = ThreadShare.createSharedObject({
 account.balance = 0;
 
 // Create a worker thread and pass the shared object to it
-const worker = new Worker('worker.js', {
+const worker = new Worker('./worker.js', {
   workerData: {
     sharedAccount: account.$buffer,
   },
 });
+
+setInterval(() => {
+    console.log(account.balance); // 100
+    process.exit(0);
+}, 30);
 ```
 
 To access a shared object within a worker thread, you need to retrieve it using the getSharedObject method and providing the shared object identifier:
