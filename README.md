@@ -20,10 +20,10 @@ ThreadShare enables you to create shared objects that can be accessed by both th
 **Creating a shared object**
 ```js
 // main.js
-const ThreadShare = require('threadshare');
+const { createSharedObject, getSharedObjectBuffer } = require('threadshare');
 const { Worker } = require('worker_threads');
 
-const account = ThreadShare.createSharedObject({
+const account = createSharedObject({
   owner: 'Elon',
 });
 
@@ -32,7 +32,7 @@ account.balance = 0;
 // Create a worker thread and pass the shared object to it
 const worker = new Worker('./worker.js', {
   workerData: {
-    sharedAccount: account.$buffer,
+    sharedAccount: getSharedObjectBuffer(account),
   },
 });
 
@@ -47,10 +47,10 @@ To access a shared object within a worker thread, you need to retrieve it using 
 
 ```js
 // worker.js
-const ThreadShare = require('threadshare');
+const { getSharedObject } = require('threadshare');
 const { workerData } = require('worker_threads');
 
-const account = ThreadShare.getSharedObject(workerData.sharedAccount);
+const account = getSharedObject(workerData.sharedAccount);
 
 console.log(account.owner); // 'Elon'
 
@@ -72,16 +72,16 @@ Any modifications made to the shared object are automatically synchronized acros
 
 - **Reference Handling**: JavaScript does not allow direct manipulation of references. As a result, ThreadShare doesn't directly handle references to nested objects or arrays. Be aware of this limitation when designing your shared objects.
 
-- **Accessing Shared Data**: When logging a shared object, you won't see the complete output. To access the actual shared data, access the `$target` field of the shared object. For shared arrays, you can access the underlying `SharedArrayBuffer` using the `$buffer` field.
+- **Accessing Shared Data**: When logging a shared object, you won't see the complete output. To access the actual shared data, use `getPlainObject` method and pass the shared object. You can also access the underlying `SharedArrayBuffer` using `getSharedObjectBuffer` method.
 
 ### Accessing Plain Object and SharedArrayBuffer
 
 ```js
 // Accessing the plain object inside a shared object
-const plainObject = sharedObject.$target;
+const plainObject = ThreadShare.getPlainObject(sharedObject);
 
 // Accessing the SharedArrayBuffer inside a shared array
-const sharedArrayBuffer = sharedArray.$buffer;
+const sharedArrayBuffer = ThreadShare.getSharedObjectBuffer(sharedObject);
 ```
 
 ## How ThreadShare Works Internally
@@ -92,7 +92,7 @@ ThreadShare employs an internal mechanism to manage shared data and ensure synch
 
 2. **Serialization to String**: To effectively manage data sharing, ThreadShare internally serializes the shared object's data as a string representation. This string representation contains the entire state of the shared object, including its custom fields.
 
-3. **Storage as Numbers**: The serialized string representation is then converted into an array of numbers using an `Int32Array`. This array of numbers, representing the serialized data, is stored in the underlying shared memory.
+3. **Storage as Numbers**: The serialized string representation is then converted into an array of numbers using an `Int32Array`. This array of numbers, representing the serialized data, is stored in the underlying shared memory.v
 
 4. **Access and Modification**: When you access a field within the shared object, ThreadShare locks the memory, decodes the stored numbers to reconstruct the serialized string, and parses this string to recreate the object. The requested field's value is then retrieved or modified accordingly.
 
@@ -123,32 +123,31 @@ Reads shared memory and returns a JavaScript object.
 This is a one-level object which allows you to create, get, edit, and delete fields.
 
 ```js
-const sharedObject = ThreadShare.createSharedObject(300);
+const sharedObject = createSharedObject({});
 
-console.log(sharedObject);
-console.log(sharedObject.$buffer);
+console.log('Plain object:', getPlainObject(sharedObject));
+console.log('Actual Buffer:', getSharedObjectBuffer(sharedObject));
 ```
 
 In contrast to JavaScript native objects, it incorporates two additional fields originating from the library.
 
-#### `sharedObject.$target`
+#### `getPlainObject(sharedObject)`
 
 This is a pure JavaScript object that offers a duplicate of the shared object. You can use it for various purposes, including logging or any other specific use cases.
 Please be aware that logging the shared object is not feasible, as it significantly differs from the native object.
 
 ```js
-console.log(sharedObject.$target); // { ... }
+console.log(getPlainObject(sharedObject)); // { ... }
 ```
 
-#### `sharedObject.$buffer`
+#### `getSharedObjectBuffer(sharedObject)`
 
-
-When you intend to create a new worker and supply initial data, for shared objects, you must provide the actual SharedArrayBuffer reference. You can locate the corresponding reference or buffer of your shared object within the $buffer field.
+When you intend to create a new worker and supply initial data, for shared objects, you must provide the actual SharedArrayBuffer reference. You can get the corresponding reference or buffer of your shared object using this method.
 
 ```js
 const worker = new Worker('worker.js', {
   workerData: {
-    sharedAccount: sharedObject.$buffer,
+    sharedAccount: getSharedObjectBuffer(sharedObject),
   }
 });
 ```

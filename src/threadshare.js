@@ -1,3 +1,4 @@
+const util = require('util');
 const decoder = new TextDecoder('utf8');
 const encoder = new TextEncoder('utf8');
 
@@ -5,6 +6,9 @@ const { lock, unlock, UNLCOKED } = require('./mutex');
 
 const DEFAULT_OBJECT_BYTE_LENGTH = 4096; // total characters of stringified object (2^12)
 const MAX_OBJECT_BYTE_LENGTH = 4294967296; // max characters length for the stringified object (2^32)
+
+const PLAIN_SHARED_OBJECT = Symbol('PLAIN_SHARED_OBJECT');
+const SHARED_OBJECT_BUFFER = Symbol('SHARED_OBJECT_BUFFER');
 
 function getSharedMemoryBuffer(sharedBuffer) {
     return new Int32Array(sharedBuffer);
@@ -90,7 +94,7 @@ function creteObjectProxyHandlers(sharedBuffer, valueBuffer) {
         },
 
         get(target, key) {
-            if (key === '$buffer') {
+            if (key === SHARED_OBJECT_BUFFER) {
                 return sharedBuffer;
             }
 
@@ -100,8 +104,7 @@ function creteObjectProxyHandlers(sharedBuffer, valueBuffer) {
 
             unlock(valueBuffer);
 
-
-            if (key === '$target') {
+            if (key === PLAIN_SHARED_OBJECT) {
                 return sharedObject;
             }
 
@@ -145,7 +148,24 @@ function getSharedObject(sharedBuffer) {
     return new Proxy(sharedObject, handlers);
 }
 
+function getPlainObject(sharedObject) {
+    if (!util.types.isProxy(sharedObject)) {
+        return null;
+    }
+    
+    return sharedObject[PLAIN_SHARED_OBJECT];
+}
+
+function getSharedObjectBuffer(sharedObject) {
+    if (!util.types.isProxy(sharedObject)) {
+        return null;
+    }
+    return sharedObject[SHARED_OBJECT_BUFFER];
+}
+
 module.exports = {
     createSharedObject,
-    getSharedObject
+    getSharedObject,
+    getPlainObject,
+    getSharedObjectBuffer,
 };

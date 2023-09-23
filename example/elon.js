@@ -1,7 +1,12 @@
-const ThreadShare = require('threadshare');
 const { Worker } = require('worker_threads');
+const {
+    getPlainObject,
+    createSharedObject,
+    getSharedObjectBuffer,
+} = require('threadshare');
 
-const account = ThreadShare.createSharedObject({
+
+const account = createSharedObject({
     owner: 'Elon',
     wallets_usd_bank: 100,
     wallets_eth: 0,
@@ -21,19 +26,19 @@ setInterval(() => {
 new Worker('./earn_in_crypto', {
     workerData: {
         coin_name: 'doge',
-        sharedAccount: account.$buffer,
+        sharedAccount: getSharedObjectBuffer(account),
     },
 });
 
 new Worker('./earn_in_crypto', {
     workerData: {
         coin_name: 'eth',
-        sharedAccount: account.$buffer,
+        sharedAccount: getSharedObjectBuffer(account),
     },
 });
 
 setInterval(() => {
-    console.log(account.$target);
+    console.log(getPlainObject(account));
 
     if (account.wallets_usd_bank <= 1) {
         process.exit(0);
