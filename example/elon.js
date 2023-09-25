@@ -1,46 +1,41 @@
+const WorkerHash = require('../src/worker_map');
 const { Worker } = require('worker_threads');
-const {
-    getPlainObject,
-    createSharedObject,
-    getSharedObjectBuffer,
-} = require('threadshare');
 
 
-const account = createSharedObject({
+const hash = new WorkerHash({
     owner: 'Elon',
     wallets_usd_bank: 100,
     wallets_eth: 0,
 });
 
-account.wallets_doge = 0;
-account.armenian_name = 'Էլոն Մասկ';
+account.set('wallets_doge', 0);
+account.set('armenian_name', 'Էլոն Մասկ');
 
 setInterval(() => {
-    account.wallets_usd_bank -= 1;
-
-    account.wallets_eth += 0.6;
-    account.wallets_doge += 0.4;
+    account.set('wallets_usd_bank', account.get('wallets_usd_bank') - 1);
+    account.set('wallets_eth', account.get('wallets_eth') + 0.6);
+    account.set('wallets_doge', account.get('wallets_doge') + 0.4);
 }, 50);
 
 
 new Worker('./earn_in_crypto', {
     workerData: {
         coin_name: 'doge',
-        sharedAccount: getSharedObjectBuffer(account),
+        sharedAccount: account.toSharedBuffer(),
     },
 });
 
 new Worker('./earn_in_crypto', {
     workerData: {
         coin_name: 'eth',
-        sharedAccount: getSharedObjectBuffer(account),
+        sharedAccount: hash.toSharedBuffer(),
     },
 });
 
 setInterval(() => {
-    console.log(getPlainObject(account));
+    console.log(account.toObject());
 
-    if (account.wallets_usd_bank <= 1) {
+    if (account.get('wallets_usd_bank') <= 1) {
         process.exit(0);
     }
 }, 30);

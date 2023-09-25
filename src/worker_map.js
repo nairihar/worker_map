@@ -1,4 +1,3 @@
-const util = require('util');
 const decoder = new TextDecoder('utf8');
 const encoder = new TextEncoder('utf8');
 
@@ -7,8 +6,10 @@ const { lock, unlock, UNLCOKED } = require('./mutex');
 const DEFAULT_OBJECT_BYTE_LENGTH = 4096; // total characters of stringified object (2^12)
 const MAX_OBJECT_BYTE_LENGTH = 4294967296; // max characters length for the stringified object (2^32)
 
-const PLAIN_SHARED_OBJECT = Symbol('PLAIN_SHARED_OBJECT');
-const SHARED_OBJECT_BUFFER = Symbol('SHARED_OBJECT_BUFFER');
+const MAP_SIZE = Symbol('MAP_SIZE');
+const PLAIN_OBJECT = Symbol('PLAIN_OBJECT');
+const VALUE_BUFFER = Symbol('VALUE_BUFFER');
+const SHARED_BUFFER = Symbol('SHARED_BUFFER');
 
 function getSharedMemoryBuffer(sharedBuffer) {
     return new Int32Array(sharedBuffer);
@@ -73,47 +74,19 @@ function adjustSharedBufferGrow(sharedBuffer, sharedObject) {
     }
 }
 
-function creteObjectProxyHandlers(sharedBuffer, valueBuffer) {
-    return {
-        set(objectProxy, prop, value) {
-            if (Number.isNaN(value) || value === undefined) {
-                value = null;
-            }
+function WorkerMap(providedObject, length=DEFAULT_OBJECT_BYTE_LENGTH) {
+    if (providedObject instanceof SharedArrayBuffer) {
+        const sharedBuffer = providedObject;
 
-            lock(valueBuffer);
+        const valueBuffer = getSharedMemoryBuffer(sharedBuffer);
+    
+        this[SHARED_BUFFER] = sharedBuffer;
+        this[VALUE_BUFFER] = valueBuffer;
 
-            const sharedObject = loadPlainSharedObject(valueBuffer)
-            
-            sharedObject[prop] = value;
+        return this;
+    }
 
-            adjustSharedBufferGrow(sharedBuffer, sharedObject);
-
-            saveObjectInBuffer(sharedObject, valueBuffer);
-
-            unlock(valueBuffer);
-        },
-
-        get(target, key) {
-            if (key === SHARED_OBJECT_BUFFER) {
-                return sharedBuffer;
-            }
-
-            lock(valueBuffer);
-            
-            const sharedObject = loadPlainSharedObject(valueBuffer);
-
-            unlock(valueBuffer);
-
-            if (key === PLAIN_SHARED_OBJECT) {
-                return sharedObject;
-            }
-
-            return sharedObject[key];
-        },
-    };
-}
-
-function createSharedObject(initialObject={}, length=DEFAULT_OBJECT_BYTE_LENGTH) {
+    const initialObject = providedObject || {};
     const stringifiedObject = JSON.stringify(initialObject);
 
     length += length % 4; // should be a multiple of 4
@@ -131,41 +104,118 @@ function createSharedObject(initialObject={}, length=DEFAULT_OBJECT_BYTE_LENGTH)
 
     saveObjectInBuffer(null, valueBuffer, stringifiedObject);
 
-    const handlers = creteObjectProxyHandlers(sharedBuffer, valueBuffer);
+    this[SHARED_BUFFER] = sharedBuffer;
+    this[VALUE_BUFFER] = valueBuffer;
+    this[MAP_SIZE] = 0;
 
-    return new Proxy(initialObject, handlers);
+    return this;
 }
 
-function getSharedObject(sharedBuffer) {
-    const valueBuffer = getSharedMemoryBuffer(sharedBuffer);
+WorkerMap.prototype.set = function (key, value) {
+    const valueBuffer = this[VALUE_BUFFER];
+    const sharedBuffer = this[SHARED_BUFFER];
+
+    if (Number.isNaN(value) || value === undefined) {
+        value = null;
+    }
 
     lock(valueBuffer);
-    const sharedObject = loadPlainSharedObject(valueBuffer);
+
+    const sharedObject = loadPlainSharedObject(valueBuffer)
+    
+    sharedObject[key] = value;
+
+    adjustSharedBufferGrow(sharedBuffer, sharedObject);
+
+    saveObjectInBuffer(sharedObject, valueBuffer);
+
+    this[MAP_SIZE] = Object.keys(sharedObject).length;
+
     unlock(valueBuffer);
 
-    const handlers = creteObjectProxyHandlers(sharedBuffer, valueBuffer);
-
-    return new Proxy(sharedObject, handlers);
-}
-
-function getPlainObject(sharedObject) {
-    if (!util.types.isProxy(sharedObject)) {
-        return null;
-    }
-    
-    return sharedObject[PLAIN_SHARED_OBJECT];
-}
-
-function getSharedObjectBuffer(sharedObject) {
-    if (!util.types.isProxy(sharedObject)) {
-        return null;
-    }
-    return sharedObject[SHARED_OBJECT_BUFFER];
-}
-
-module.exports = {
-    createSharedObject,
-    getSharedObject,
-    getPlainObject,
-    getSharedObjectBuffer,
+    return true;
 };
+
+WorkerMap.prototype.get = function (key) {
+    const valueBuffer = this[VALUE_BUFFER];
+
+    lock(valueBuffer);
+    
+    const sharedObject = loadPlainSharedObject(valueBuffer);
+
+    unlock(valueBuffer);
+
+    if (key === PLAIN_OBJECT) {
+        return sharedObject;
+    }
+
+    return sharedObject[key];
+};
+
+WorkerMap.prototype.delete = function (key) {
+    const valueBuffer = this[VALUE_BUFFER];
+
+    if (Number.isNaN(value) || value === undefined) {
+        value = null;
+    }
+
+    lock(valueBuffer);
+
+    const sharedObject = loadPlainSharedObject(valueBuffer)
+    
+    delete sharedObject[key];
+
+    saveObjectInBuffer(sharedObject, valueBuffer);
+
+    this[MAP_SIZE] = Object.keys(sharedObject).length;
+
+    unlock(valueBuffer);
+
+    return true;
+};
+
+WorkerMap.prototype.size = function (key) {
+    return this[MAP_SIZE];
+};
+
+WorkerMap.prototype.keys = function () {
+    const valueBuffer = this[VALUE_BUFFER];
+
+    lock(valueBuffer);
+
+    const sharedObject = loadPlainSharedObject(valueBuffer)
+    
+    delete sharedObject[key];
+
+    saveObjectInBuffer(sharedObject, valueBuffer);
+
+    const allKeys = Object.keys(sharedObject);
+
+    unlock(valueBuffer);
+
+    return allKeys;
+};
+
+WorkerMap.prototype.has = function (key) {
+    const valueBuffer = this[VALUE_BUFFER];
+
+    lock(valueBuffer);
+
+    const sharedObject = loadPlainSharedObject(valueBuffer)
+
+    const keyExists = sharedObject[key] !== undefined;
+
+    unlock(valueBuffer);
+
+    return keyExists;
+};
+
+WorkerMap.prototype.toSharedBuffer = function () {
+    return this[SHARED_BUFFER];
+};
+
+WorkerMap.prototype.toObject = function() {
+    return this.get(PLAIN_OBJECT);
+};
+
+module.exports = { WorkerMap };

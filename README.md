@@ -1,11 +1,13 @@
 ![](https://img.shields.io/badge/dependencies-none-brightgreen.svg)
-![](https://img.shields.io/npm/dt/threadshare.svg)
-![](https://img.shields.io/npm/l/threadshare.svg)
-[![Known Vulnerabilities](https://snyk.io/test/github/nairihar/threadshare/badge.svg)](https://snyk.io/test/github/nairihar/funthreads)
+![](https://img.shields.io/npm/dt/worker_map.svg)
+[![Known Vulnerabilities](https://snyk.io/test/github/nairihar/worker_map/badge.svg)](https://snyk.io/test/github/nairihar/funthreads)
+![](https://img.shields.io/npm/l/worker_map.svg)
 
-# threadshare
+# worker_map
 
-ThreadShare is a JavaScript library that provides an abstraction for Node.js `worker_threads`, allowing you to create and share objects between worker threads and the main process. This simplifies the process of managing shared data and communication between threads.
+An simple abstraction for Node.js `worker_threads`, allowing you to create and share `Map (hash table)` between worker threads and the main process. This simplifies the process of managing shared data and communication between worker threads.
+
+![](https://topentol.sirv.com/github/worker_map.jpg)
 
 ## Installation
 
@@ -14,140 +16,54 @@ npm i threadshare
 ```
 
 ## Basic Example
+First, let's create a simple hash map structure in main process, then create a worker thread and share the hash.
 
-ThreadShare enables you to create shared objects that can be accessed by both the main process and worker threads. To create a shared object, use the createSharedObject method:
-
-**Creating a shared object**
 ```js
 // main.js
-const { createSharedObject, getSharedObjectBuffer } = require('threadshare');
 const { Worker } = require('worker_threads');
+const { WorkerMap } = require('worker_map');
 
-const account = createSharedObject({
-  owner: 'Elon',
-});
+const map = new WorkerMap();
+map.set('balance', 100); // sync operation
 
-account.balance = 0;
-
-// Create a worker thread and pass the shared object to it
-const worker = new Worker('./worker.js', {
+new Worker('./worker.js', {
   workerData: {
-    sharedAccount: getSharedObjectBuffer(account),
+    mapBuffer: map.toSharedBuffer(),
   },
 });
 
-setInterval(() => {
-  console.log(account.balance); // 100
-  process.exit(0);
-}, 30);
+setTimeout(() => {
+    console.log(map.get('balance')); // 200
+}, 50);
+
 ```
 
-To access a shared object within a worker thread, you need to retrieve it using the getSharedObject method and providing the shared object identifier:
-**Accessing the shared object in a Worker Thread**
+Now, let's access the shared hash map structure in the worker thread.
 
 ```js
 // worker.js
-const { getSharedObject } = require('threadshare');
+const { WorkerMap } = require('worker_map');
 const { workerData } = require('worker_threads');
 
-const account = getSharedObject(workerData.sharedAccount);
+const map = new WorkerMap(workerData.mapBuffer);
+console.log(map.get('balance')); // 100
 
-console.log(account.owner); // 'Elon'
-
-// The change in balance will also be reflected in the main process
-account.balance += 100;
+// The change will be reflected in the main process as well
+map.set('balance', 200);
 ```
 
-### Communication between Threads
+## Instance methods
 
-Using ThreadShare's shared objects, you can easily communicate and share data(`object`) between the main process and worker threads.
+### `map.get(key)`
+### `map.set(key, value)`
+### `map.delete(key)`
+### `map.has(key)`
+### `map.size()`
+### `map.keys()`
+### `map.toSharedBuffer()`
+### `map.toObject()`
 
-![](https://topentol.sirv.com/github/share_thread.png)
-
-Any modifications made to the shared object are automatically synchronized across all threads and vice versa.
-
-## Limitations and Considerations
-
-- **Single Level Objects**: ThreadShare is designed to work with one-level objects. Nested objects and arrays are not supported directly within shared objects. You can, however, create fields that hold other objects inside the shared object.
-
-- **Reference Handling**: JavaScript does not allow direct manipulation of references. As a result, ThreadShare doesn't directly handle references to nested objects or arrays. Be aware of this limitation when designing your shared objects.
-
-- **Accessing Shared Data**: When logging a shared object, you won't see the complete output. To access the actual shared data, use `getPlainObject` method and pass the shared object. You can also access the underlying `SharedArrayBuffer` using `getSharedObjectBuffer` method.
-
-### Accessing Plain Object and SharedArrayBuffer
-
-```js
-// Accessing the plain object inside a shared object
-const plainObject = ThreadShare.getPlainObject(sharedObject);
-
-// Accessing the SharedArrayBuffer inside a shared array
-const sharedArrayBuffer = ThreadShare.getSharedObjectBuffer(sharedObject);
-```
-
-## How ThreadShare Works Internally
-
-ThreadShare employs an internal mechanism to manage shared data and ensure synchronization between the main process and worker threads. This section provides insights into the underlying workflow of the library.
-
-1. **Locking Shared Memory**: Every time you attempt to access or modify a field within a shared object, ThreadShare initiates a process to lock the shared memory. This prevents other threads from accessing the memory simultaneously, reducing the risk of data corruption or race conditions.
-
-2. **Serialization to String**: To effectively manage data sharing, ThreadShare internally serializes the shared object's data as a string representation. This string representation contains the entire state of the shared object, including its custom fields.
-
-3. **Storage as Numbers**: The serialized string representation is then converted into an array of numbers using an `Int32Array`. This array of numbers, representing the serialized data, is stored in the underlying shared memory.v
-
-4. **Access and Modification**: When you access a field within the shared object, ThreadShare locks the memory, decodes the stored numbers to reconstruct the serialized string, and parses this string to recreate the object. The requested field's value is then retrieved or modified accordingly.
-
-5. **Unlocking Shared Memory**: After accessing or modifying the shared object's fields, ThreadShare releases the memory lock, allowing other threads to access the shared memory area.
-
-## API
-
-### `createSharedObject(initialObject={}, length=2^12)`
-
-This method will create a shared object, and return a JavaScript object.
-
-When creating a new shared object, we have the option to specify the initial object we want to store in memory. By default, the library allocates four times more memory in case we need to make future modifications.
-
-The library also determines the amount of memory to allocate based on the `length` parameter. By default, the length is set to `4096`, meaning that the stringified version of your shared object should not exceed this length.
-Internaly for each item library uses `Int32Array` which makes shared buffer's total size `4 * 4096 bytes`.
-
-You have the option to specify the length when you create the shared object; however, it's important to note that you won't be able to modify it later on. `length` value should be a **multiple of 4**.
-
-**For Node.js >= V20**
-When interacting with the object, as you set and update its fields and values, the shared buffer will automatically expand to accommodate additional data. In this case max shared buffer's total size is `2^32 (4294967296) bytes`.
-
-### `getSharedObject()`
-
-Reads shared memory and returns a JavaScript object.
-
-### Shared object
-
-This is a one-level object which allows you to create, get, edit, and delete fields.
-
-```js
-const sharedObject = createSharedObject({});
-
-console.log('Plain object:', getPlainObject(sharedObject));
-console.log('Actual Buffer:', getSharedObjectBuffer(sharedObject));
-```
-
-In contrast to JavaScript native objects, it incorporates two additional fields originating from the library.
-
-#### `getPlainObject(sharedObject)`
-
-This is a pure JavaScript object that offers a duplicate of the shared object. You can use it for various purposes, including logging or any other specific use cases.
-Please be aware that logging the shared object is not feasible, as it significantly differs from the native object.
-
-```js
-console.log(getPlainObject(sharedObject)); // { ... }
-```
-
-#### `getSharedObjectBuffer(sharedObject)`
-
-When you intend to create a new worker and supply initial data, for shared objects, you must provide the actual SharedArrayBuffer reference. You can get the corresponding reference or buffer of your shared object using this method.
-
-```js
-const worker = new Worker('worker.js', {
-  workerData: {
-    sharedAccount: getSharedObjectBuffer(sharedObject),
-  }
-});
-```
+## TODO
+### `map.clear()`
+### `map.entries()`
+### `map.forEach()`

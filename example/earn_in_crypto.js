@@ -1,8 +1,10 @@
-const { getSharedObject } = require('threadshare');
+const ThreadShare = require('../src/worker_map');
 const { workerData } = require('worker_threads');
 
-const account = getSharedObject(workerData.sharedAccount);
+const account = new ThreadShare(workerData.sharedAccount);
 
 setInterval(() => {
-  account[`wallets_${workerData.coin_name}`] *= 1.2;
+  const key = `wallets_${workerData.coin_name}`;
+
+  account.set(key, account.get(key) * 1.2);
 }, 50);
