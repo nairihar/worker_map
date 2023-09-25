@@ -12,16 +12,16 @@ An simple abstraction for Node.js `worker_threads`, allowing you to create and s
 ## Installation
 
 ```
-npm i threadshare
+npm i worker_map
 ```
 
 ## Basic Example
-First, let's create a simple hash map structure in main process, then create a worker thread and share the hash.
+Creates a simple map structure in the main process, then creates a worker thread and shares the map structure.
 
 ```js
 // main.js
-const { Worker } = require('worker_threads');
 const { WorkerMap } = require('worker_map');
+const { Worker } = require('worker_threads');
 
 const map = new WorkerMap();
 map.set('balance', 100); // sync operation
@@ -38,7 +38,7 @@ setTimeout(() => {
 
 ```
 
-Now, let's access the shared hash map structure in the worker thread.
+Access to the shared map structure from the worker thread.
 
 ```js
 // worker.js
