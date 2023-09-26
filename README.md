@@ -3,6 +3,10 @@
 ![](https://img.shields.io/npm/l/threadshare.svg)
 [![Known Vulnerabilities](https://snyk.io/test/github/nairihar/threadshare/badge.svg)](https://snyk.io/test/github/nairihar/funthreads)
 
+---
+## !! Use [`worker_map`](https://github.com/nairihar/worker_map) instead, which is a better and simple implementation
+---
+
 # threadshare
 
 ThreadShare is a JavaScript library that provides an abstraction for Node.js `worker_threads`, allowing you to create and share objects between worker threads and the main process. This simplifies the process of managing shared data and communication between threads.
