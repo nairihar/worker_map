@@ -5,7 +5,7 @@
 
 # worker_map
 
-An simple abstraction for Node.js `worker_threads`, allowing you to create and share `Map (hash table)` between worker threads and the main process. This simplifies the process of managing shared data and communication between worker threads.
+A simple abstraction for Node.js `worker_threads`, allowing you to create and share a `Map (hash table)` between worker threads and the main process. This simplifies the process of managing shared data and communication between worker threads.
 
 ![](https://topentol.sirv.com/github/worker_map.jpg)
 
@@ -35,7 +35,7 @@ new Worker('./worker.js', {
 });
 
 setTimeout(() => {
-    console.log(map.get('balance')); // 200
+  console.log(map.get('balance')); // 200
 }, 50);
 
 ```
