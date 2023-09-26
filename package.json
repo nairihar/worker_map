@@ -1,12 +1,12 @@
 {
     "name": "worker_map",
     "description": "Tread-safe map structure for worker_threads.",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "main": "./src/worker_hash.js",
     "scripts": {
         "test": "node --test ./test"
     },
-    "homepage": "https://github.com/nairihar/threadshare",
+    "homepage": "https://github.com/nairihar/worker_map",
     "keywords": [
         "thread",
         "worker",

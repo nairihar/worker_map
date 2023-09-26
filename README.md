@@ -14,7 +14,7 @@ Under the hood, the library uses `SharedArrayBuffer` to create shared memory, en
 ## Installation
 
 ```
-npm i threadshare
+npm i worker_map
 ```
 
 ## Basic Example
