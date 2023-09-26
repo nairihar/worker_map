@@ -1,23 +1,24 @@
 {
-    "name": "threadshare",
-    "description": "Share hash structures across worker_threads.",
-    "version": "1.1.0",
+    "name": "worker_map",
+    "description": "Tread-safe map structure for worker_threads.",
+    "version": "0.0.1",
     "main": "./src/worker_hash.js",
+    "scripts": {
+        "test": "node --test ./test"
+    },
     "homepage": "https://github.com/nairihar/threadshare",
     "keywords": [
-        "worker threads",
+        "thread",
+        "worker",
+        "worker_threads",
         "multithreading",
-        "shared objects",
-        "synchronization",
-        "threading",
         "data sharing",
-        "multithreaded applications",
-        "distributed computing",
-        "thread safety",
-        "hash",
-        "shared hash",
-        "worker hash",
-        "thread hash"
+        "hash map",
+        "hash table",
+        "shared map",
+        "worker share",
+        "thread safe",
+        "worker_map"
     ],
     "author": "Nairi Harutyunyan",
     "license": "MIT"

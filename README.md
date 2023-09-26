@@ -9,19 +9,21 @@ An simple abstraction for Node.js `worker_threads`, allowing you to create and s
 
 ![](https://topentol.sirv.com/github/worker_map.jpg)
 
+Under the hood, the library uses `SharedArrayBuffer` to create shared memory, enabling seamless data sharing between threads. Additionally, it uses `Atomics` mechanism to implement a **mutex**, ensuring **thread safety** and preventing race conditions during data access and manipulation.
+
 ## Installation
 
 ```
-npm i worker_map
+npm i threadshare
 ```
 
 ## Basic Example
-Creates a simple map structure in the main process, then creates a worker thread and shares the map structure.
+First, let's create a simple hash map structure in main process, then create a worker thread and share the hash.
 
 ```js
 // main.js
-const { WorkerMap } = require('worker_map');
 const { Worker } = require('worker_threads');
+const { WorkerMap } = require('worker_map');
 
 const map = new WorkerMap();
 map.set('balance', 100); // sync operation
@@ -38,7 +40,7 @@ setTimeout(() => {
 
 ```
 
-Access to the shared map structure from the worker thread.
+Now, let's access the shared hash map structure in the worker thread.
 
 ```js
 // worker.js
@@ -54,16 +56,52 @@ map.set('balance', 200);
 
 ## Instance methods
 
-### `map.get(key)`
+### `map.get(key):`
+```
+const name = map.get('name');
+```
 ### `map.set(key, value)`
-### `map.delete(key)`
+```
+map.set('name', 'John');
+```
+### `map.delete(key):`
+```
+map.delete('name'); // true
+map.delete('something'); // false because doesn't exist
+```
 ### `map.has(key)`
+```
+map.has('name'); // true
+map.has('country'); // false
+```
 ### `map.size()`
+```
+map.has('size'); // 1
+```
 ### `map.keys()`
+```
+map.keys(); // [ 'name' ]
+```
 ### `map.toSharedBuffer()`
+```
+const buffer = map.toSharedBuffer();
+const sameMap = new WorkerMap(buffer);
+```
 ### `map.toObject()`
+```
+const mapObject = map.toObject();
+mapObject.name; // 'John'
+```
 
-## TODO
-### `map.clear()`
-### `map.entries()`
-### `map.forEach()`
+#### TODO
+- `map.clear()`
+- `map.entries()`
+- `map.forEach()`
+
+
+## Limitations
+
+Please be aware of the following limitations when using our library:
+1. **Functions:** Function types are not supported.
+2. **NaN Values:** NaN values are not supported.
+

@@ -1,5 +1,5 @@
+const { WorkerMap } = require('worker_map');
 const { Worker } = require('worker_threads');
-const { WorkerMap } = require('../../src/worker_map');
 
 const map = new WorkerMap();
 map.set('balance', 100); // sync operation

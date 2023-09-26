@@ -37,6 +37,17 @@ function loadPlainSharedObject(valueBuffer) {
     );
 }
 
+function safeLoadSharedObject(valueBuffer) {
+    lock(valueBuffer);
+
+    const sharedObject = loadPlainSharedObject(valueBuffer)
+
+    unlock(valueBuffer);
+
+    return sharedObject;
+}
+
+
 function calculateStringByteLength(string) {
     return encoder.encode(string).length;
 }
@@ -82,6 +93,7 @@ function WorkerMap(providedObject, length=DEFAULT_OBJECT_BYTE_LENGTH) {
     
         this[SHARED_BUFFER] = sharedBuffer;
         this[VALUE_BUFFER] = valueBuffer;
+        this[MAP_SIZE] = this.keys().length;
 
         return this;
     }
@@ -112,6 +124,10 @@ function WorkerMap(providedObject, length=DEFAULT_OBJECT_BYTE_LENGTH) {
 }
 
 WorkerMap.prototype.set = function (key, value) {
+    if (typeof key === 'function' || typeof value === 'function') {
+        return false;
+    }
+
     const valueBuffer = this[VALUE_BUFFER];
     const sharedBuffer = this[SHARED_BUFFER];
 
@@ -138,12 +154,7 @@ WorkerMap.prototype.set = function (key, value) {
 
 WorkerMap.prototype.get = function (key) {
     const valueBuffer = this[VALUE_BUFFER];
-
-    lock(valueBuffer);
-    
-    const sharedObject = loadPlainSharedObject(valueBuffer);
-
-    unlock(valueBuffer);
+    const sharedObject = safeLoadSharedObject(valueBuffer)
 
     if (key === PLAIN_OBJECT) {
         return sharedObject;
@@ -155,21 +166,23 @@ WorkerMap.prototype.get = function (key) {
 WorkerMap.prototype.delete = function (key) {
     const valueBuffer = this[VALUE_BUFFER];
 
-    if (Number.isNaN(value) || value === undefined) {
-        value = null;
-    }
-
     lock(valueBuffer);
 
     const sharedObject = loadPlainSharedObject(valueBuffer)
+    
+    if (sharedObject[key] === undefined) {
+        unlock(valueBuffer);
+
+        return false;
+    }
     
     delete sharedObject[key];
 
     saveObjectInBuffer(sharedObject, valueBuffer);
 
-    this[MAP_SIZE] = Object.keys(sharedObject).length;
-
     unlock(valueBuffer);
+
+    this[MAP_SIZE] = Object.keys(sharedObject).length;
 
     return true;
 };
@@ -180,34 +193,16 @@ WorkerMap.prototype.size = function (key) {
 
 WorkerMap.prototype.keys = function () {
     const valueBuffer = this[VALUE_BUFFER];
-
-    lock(valueBuffer);
-
-    const sharedObject = loadPlainSharedObject(valueBuffer)
+    const sharedObject = safeLoadSharedObject(valueBuffer)
     
-    delete sharedObject[key];
-
-    saveObjectInBuffer(sharedObject, valueBuffer);
-
-    const allKeys = Object.keys(sharedObject);
-
-    unlock(valueBuffer);
-
-    return allKeys;
+    return Object.keys(sharedObject);
 };
 
 WorkerMap.prototype.has = function (key) {
     const valueBuffer = this[VALUE_BUFFER];
+    const sharedObject = safeLoadSharedObject(valueBuffer)
 
-    lock(valueBuffer);
-
-    const sharedObject = loadPlainSharedObject(valueBuffer)
-
-    const keyExists = sharedObject[key] !== undefined;
-
-    unlock(valueBuffer);
-
-    return keyExists;
+    return sharedObject[key] !== undefined;
 };
 
 WorkerMap.prototype.toSharedBuffer = function () {
