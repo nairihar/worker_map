@@ -1,7 +1,7 @@
 {
     "name": "worker_map",
     "description": "Tread-safe map structure for worker_threads.",
-    "version": "0.0.5",
+    "version": "0.0.6",
     "main": "./src/worker_map.js",
     "scripts": {
         "test": "node --test ./test",
