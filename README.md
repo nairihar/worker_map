@@ -1,7 +1,6 @@
 ![](https://img.shields.io/badge/dependencies-none-brightgreen.svg)
-![](https://img.shields.io/npm/dt/worker_map.svg)
-[![Known Vulnerabilities](https://snyk.io/test/github/nairihar/worker_map/badge.svg)](https://snyk.io/test/github/nairihar/funthreads)
 ![](https://img.shields.io/npm/l/worker_map.svg)
+![](https://img.shields.io/npm/dt/worker_map.svg)
 
 # worker_map
 
@@ -56,6 +55,8 @@ map.set('balance', 200);
 
 ## Instance methods
 
+Worker_map is much like JavaScript's regular Map.
+
 ### `map.get(key):`
 ```
 const name = map.get('name');
@@ -93,7 +94,11 @@ const mapObject = map.toObject();
 mapObject.name; // 'John'
 ```
 
-## TODO
+## Contributing
+See the [contributing guide](https://github.com/nairihar/worker_map/blob/main/CONTRIBUTING.md) for detailed instructions on how to get started with our project.
+
+**TODO**
+
 - `map.clear()`
 - `map.entries()`
 - `map.forEach()`
