@@ -57,18 +57,18 @@ map.set('balance', 200);
 
 Worker_map is much like JavaScript's regular Map.
 
-### `map.get(key):`
-```
-const name = map.get('name');
-```
 ### `map.set(key, value)`
 ```
-map.set('name', 'John');
+map.set('name', 'John'); // true
+```
+### `map.get(key):`
+```
+const name = map.get('name'); // 'John'
 ```
 ### `map.delete(key):`
 ```
 map.delete('name'); // true
-map.delete('something'); // false because doesn't exist
+map.delete('something'); // false because it doesn't exist
 ```
 ### `map.has(key)`
 ```
@@ -90,7 +90,7 @@ const sameMap = new WorkerMap(buffer);
 ```
 ### `map.toObject()`
 ```
-const mapObject = map.toObject();
+const mapObject = map.toObject(); // { ... }
 mapObject.name; // 'John'
 ```
 
