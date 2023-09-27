@@ -93,15 +93,14 @@ const mapObject = map.toObject();
 mapObject.name; // 'John'
 ```
 
-#### TODO
+## TODO
 - `map.clear()`
 - `map.entries()`
 - `map.forEach()`
-
+- Currently, when performing an action on the map, it temporarily locks the entire map, loads the necessary data, and then unlocks the map, allowing other threads to access it. However, this approach is suboptimal. It would be more efficient if we could lock only the specific portion of memory required for the particular operation.
 
 ## Limitations
 
 Please be aware of the following limitations when using our library:
 1. **Functions:** Function types are not supported.
 2. **NaN Values:** NaN values are not supported.
-
