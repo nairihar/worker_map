@@ -1,8 +1,8 @@
 {
     "name": "worker_map",
     "description": "Tread-safe map structure for worker_threads.",
-    "version": "0.0.4",
-    "main": "./src/worker_hash.js",
+    "version": "0.0.6",
+    "main": "./src/worker_map.js",
     "scripts": {
         "test": "node --test ./test",
         "lint": "eslint ./**/*.js"
@@ -11,8 +11,8 @@
         "eslint": "8.49.0",
         "eslint-config-airbnb-base": "15.0.0",
         "eslint-config-prettier": "9.0.0",
-        "eslint-plugin-prettier": "5.0.0",
         "eslint-plugin-import": "2.28.1",
+        "eslint-plugin-prettier": "5.0.0",
         "prettier": "3.0.3"
     },
     "homepage": "https://github.com/nairihar/worker_map",

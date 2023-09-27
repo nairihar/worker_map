@@ -17,14 +17,14 @@ setInterval(() => {
 }, 50);
 
 
-new Worker('./earn_in_crypto', {
+new Worker('./worker', {
     workerData: {
         coin_name: 'doge',
         sharedAccount: accountMap.toSharedBuffer(),
     },
 });
 
-new Worker('./earn_in_crypto', {
+new Worker('./worker', {
     workerData: {
         coin_name: 'eth',
         sharedAccount: accountMap.toSharedBuffer(),
