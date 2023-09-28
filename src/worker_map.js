@@ -6,7 +6,6 @@ const { lock, unlock, UNLCOKED } = require("./mutex");
 const DEFAULT_OBJECT_BYTE_LENGTH = 4096; // total characters of stringified object (2^12)
 const MAX_OBJECT_BYTE_LENGTH = 4294967296; // max characters length for the stringified object (2^32)
 
-const MAP_SIZE = Symbol("MAP_SIZE");
 const PLAIN_OBJECT = Symbol("PLAIN_OBJECT");
 const VALUE_BUFFER = Symbol("VALUE_BUFFER");
 const SHARED_BUFFER = Symbol("SHARED_BUFFER");
@@ -91,7 +90,6 @@ function WorkerMap(providedObject, length = DEFAULT_OBJECT_BYTE_LENGTH) {
 
     this[SHARED_BUFFER] = sharedBuffer;
     this[VALUE_BUFFER] = valueBuffer;
-    this[MAP_SIZE] = this.keys().length;
 
     return this;
   }
@@ -119,7 +117,6 @@ function WorkerMap(providedObject, length = DEFAULT_OBJECT_BYTE_LENGTH) {
 
   this[SHARED_BUFFER] = sharedBuffer;
   this[VALUE_BUFFER] = valueBuffer;
-  this[MAP_SIZE] = 0;
 
   return this;
 }
@@ -145,8 +142,6 @@ WorkerMap.prototype.set = function (key, value) {
   adjustSharedBufferGrow(sharedBuffer, sharedObject);
 
   saveObjectInBuffer(sharedObject, valueBuffer);
-
-  this[MAP_SIZE] = Object.keys(sharedObject).length;
 
   unlock(valueBuffer);
 
@@ -183,13 +178,14 @@ WorkerMap.prototype.delete = function (key) {
 
   unlock(valueBuffer);
 
-  this[MAP_SIZE] = Object.keys(sharedObject).length;
-
   return true;
 };
 
 WorkerMap.prototype.size = function () {
-  return this[MAP_SIZE];
+  const valueBuffer = this[VALUE_BUFFER];
+  const sharedObject = safeLoadSharedObject(valueBuffer);
+
+  return Object.keys(sharedObject).length;
 };
 
 WorkerMap.prototype.keys = function () {
