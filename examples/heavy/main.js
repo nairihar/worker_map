@@ -1,13 +1,12 @@
 const { WorkerMap } = require('worker_map');
 const { Worker } = require('worker_threads');
 
-const accountMap = new WorkerMap({
-  owner: 'Elon',
-  wallets_usd_bank: 100,
-  wallets_eth: 0,
-});
+const accountMap = new WorkerMap();
 
+accountMap.set('owner', 'Elon');
+accountMap.set('wallets_eth', 0);
 accountMap.set('wallets_doge', 0);
+accountMap.set('wallets_usd_bank', 100);
 accountMap.set('armenian_name', 'Էլոն Մասկ');
 
 setInterval(() => {
