@@ -27,6 +27,7 @@ In addition to the following guidelines, please follow the conventions already e
   character to avoid unnecessary escaping.
 
 Guidelines are enforced using [ESLint](https://www.npmjs.com/package/eslint):
+
 ```bash
 $ npm run lint
 ```

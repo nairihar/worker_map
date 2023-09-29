@@ -13,7 +13,7 @@ function lock(buffer) {
 function unlock(buffer) {
   if (Atomics.compareExchange(buffer, 0, LOCKED, UNLCOKED) !== LOCKED) {
     throw new Error(
-      "Mutex is in inconsistent state: unlock on unlocked Mutex.",
+      'Mutex is in inconsistent state: unlock on unlocked Mutex.',
     );
   }
 

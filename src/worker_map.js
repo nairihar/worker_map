@@ -1,14 +1,16 @@
-const decoder = new TextDecoder("utf8");
-const encoder = new TextEncoder("utf8");
+const decoder = new TextDecoder('utf8');
+const encoder = new TextEncoder('utf8');
 
-const { lock, unlock, UNLCOKED } = require("./mutex");
+const { lock, unlock, UNLCOKED } = require('./mutex');
 
-const DEFAULT_OBJECT_BYTE_LENGTH = 4096; // total characters of stringified object (2^12)
-const MAX_OBJECT_BYTE_LENGTH = 4294967296; // max characters length for the stringified object (2^32)
+// total characters of stringified object (2^12)
+const DEFAULT_OBJECT_BYTE_LENGTH = 4096;
+// max characters length for the stringified object (2^32)
+const MAX_OBJECT_BYTE_LENGTH = 4294967296;
 
-const PLAIN_OBJECT = Symbol("PLAIN_OBJECT");
-const VALUE_BUFFER = Symbol("VALUE_BUFFER");
-const SHARED_BUFFER = Symbol("SHARED_BUFFER");
+const PLAIN_OBJECT = Symbol('PLAIN_OBJECT');
+const VALUE_BUFFER = Symbol('VALUE_BUFFER');
+const SHARED_BUFFER = Symbol('SHARED_BUFFER');
 
 function getSharedMemoryBuffer(sharedBuffer) {
   return new Int32Array(sharedBuffer);
@@ -71,7 +73,7 @@ function adjustSharedBufferGrow(sharedBuffer, sharedObject) {
   if (diff <= 0) {
     if (!sharedBuffer.grow) {
       throw new Error(
-        "No more space, create a new bigger shared object or use Node >= v20 to support auto grow.",
+        'No more space, create a new bigger shared object or use Node >= v20 to support auto grow.',
       );
     }
 
@@ -122,7 +124,7 @@ function WorkerMap(providedObject, length = DEFAULT_OBJECT_BYTE_LENGTH) {
 }
 
 WorkerMap.prototype.set = function (key, value) {
-  if (typeof key === "function" || typeof value === "function") {
+  if (typeof key === 'function' || typeof value === 'function') {
     return false;
   }
 
@@ -145,7 +147,7 @@ WorkerMap.prototype.set = function (key, value) {
 
   unlock(valueBuffer);
 
-  return true;
+  return this;
 };
 
 WorkerMap.prototype.get = function (key) {
@@ -181,6 +183,16 @@ WorkerMap.prototype.delete = function (key) {
   return true;
 };
 
+WorkerMap.prototype.clear = function () {
+  const valueBuffer = this[VALUE_BUFFER];
+
+  lock(valueBuffer);
+
+  saveObjectInBuffer({}, valueBuffer);
+
+  unlock(valueBuffer);
+};
+
 WorkerMap.prototype.size = function () {
   const valueBuffer = this[VALUE_BUFFER];
   const sharedObject = safeLoadSharedObject(valueBuffer);
@@ -200,6 +212,24 @@ WorkerMap.prototype.has = function (key) {
   const sharedObject = safeLoadSharedObject(valueBuffer);
 
   return sharedObject[key] !== undefined;
+};
+
+WorkerMap.prototype.entries = function () {
+  const valueBuffer = this[VALUE_BUFFER];
+  const sharedObject = safeLoadSharedObject(valueBuffer);
+
+  return Object.entries(sharedObject);
+};
+
+WorkerMap.prototype.forEach = function (cb) {
+  const valueBuffer = this[VALUE_BUFFER];
+  const sharedObject = safeLoadSharedObject(valueBuffer);
+
+  const entries = Object.entries(sharedObject);
+
+  entries.forEach(([key, value]) => {
+    cb(key, value, this);
+  });
 };
 
 WorkerMap.prototype.toSharedBuffer = function () {

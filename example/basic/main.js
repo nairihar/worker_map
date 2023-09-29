@@ -11,5 +11,5 @@ new Worker('./worker.js', {
 });
 
 setTimeout(() => {
-    console.log(map.get('balance')); // 200
+  console.log(map.get('balance')); // 200
 }, 50);

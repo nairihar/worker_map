@@ -1,71 +1,99 @@
-const test = require("node:test");
-const assert = require("node:assert");
+const test = require('node:test');
+const assert = require('node:assert');
 
-const { WorkerMap } = require("../src/worker_map");
+const { WorkerMap } = require('../src/worker_map');
 
 let map = null;
 
-test("Create a map structure", () => {
+const values = {
+  balance: 100,
+  name: 'John',
+  nameArmenian: 'Ջոն',
+  lovesSport: true,
+  numbers: [1, 2, 3, 4],
+  details: {
+    citizen: {
+      country: 'Germany',
+      passportYear: 1999,
+    },
+  },
+};
+
+test('Create a map structure', () => {
   map = new WorkerMap();
 });
 
-test(".set()", () => {
-  map.set("balance", 100);
-  map.set("name", "John");
-  map.set("nameArmenian", "Ջոն");
-  map.set("lovesSport", true);
-  map.set("numbers", [1, 2, 3, 4]);
-  map.set("details", {
-    citizen: {
-      country: "Germany",
-      passportYear: 1999,
-    },
+test('.set()', () => {
+  Object.entries(values).forEach(([key, value]) => {
+    const sameMap = map.set(key, value);
+    assert.strictEqual(sameMap, map);
   });
 });
 
-test(".get()", () => {
-  assert.strictEqual(map.get("balance"), 100);
-  assert.strictEqual(map.get("name"), "John");
-  assert.strictEqual(map.get("nameArmenian"), "Ջոն");
-  assert.strictEqual(map.get("lovesSport"), true);
-  assert.strictEqual(map.get("numbers").length, 4);
-  assert.strictEqual(map.get("details").citizen.country, "Germany");
+test('.get()', () => {
+  assert.strictEqual(map.get('balance'), 100);
+  assert.strictEqual(map.get('name'), 'John');
+  assert.strictEqual(map.get('nameArmenian'), 'Ջոն');
+  assert.strictEqual(map.get('lovesSport'), true);
+  assert.strictEqual(map.get('numbers').length, 4);
+  assert.strictEqual(map.get('details').citizen.country, 'Germany');
 });
 
-test(".has", () => {
-  assert.strictEqual(map.has("balance"), true);
-  assert.strictEqual(map.has("name"), true);
-  assert.strictEqual(map.has("nameLatin"), false);
-  assert.strictEqual(map.has("text"), false);
-  assert.strictEqual(map.has("numbers"), true);
+test('.has', () => {
+  assert.strictEqual(map.has('balance'), true);
+  assert.strictEqual(map.has('name'), true);
+  assert.strictEqual(map.has('nameLatin'), false);
+  assert.strictEqual(map.has('text'), false);
+  assert.strictEqual(map.has('numbers'), true);
 });
 
-test(".delete", () => {
-  assert.strictEqual(map.delete("balance"), true);
-  assert.strictEqual(map.has("balance"), false);
+test('.delete', () => {
+  assert.strictEqual(map.delete('balance'), true);
+  assert.strictEqual(map.has('balance'), false);
 
-  assert.strictEqual(map.delete("account"), false);
+  assert.strictEqual(map.delete('account'), false);
 });
 
-test(".size", () => {
+test('.size', () => {
   assert.strictEqual(map.size(), 5);
 });
 
-test(".keys", () => {
+test('.keys', () => {
   assert.strictEqual(map.keys().length, 5);
-  assert.strictEqual(map.keys()[0], "name");
+  assert.strictEqual(map.keys()[0], 'name');
 });
 
-test(".toSharedBuffer", () => {
+test('.entries', () => {
+  const entries = map.entries();
+
+  entries.forEach(([key, value]) => {
+    assert.deepEqual(values[key], value);
+  });
+});
+
+test('.forEach', () => {
+  map.forEach((key, value, sameMap) => {
+    assert.deepEqual(values[key], value);
+    assert.strictEqual(sameMap, map);
+  });
+});
+
+test('.toSharedBuffer', () => {
   const sharedBuffer = map.toSharedBuffer();
   const sameMap = new WorkerMap(sharedBuffer);
 
   assert.strictEqual(sameMap.size(), 5);
 });
 
-test(".toObject", () => {
+test('.toObject', () => {
   const mapObject = map.toObject();
 
-  assert.strictEqual(mapObject.details.citizen.passportYear, 1999);
-  assert.strictEqual(Object.keys(mapObject).length, 5);
+  Object.entries(mapObject).forEach(([key, value]) => {
+    assert.deepEqual(values[key], value);
+  });
+});
+
+test('.clear', () => {
+  map.clear();
+  assert.strictEqual(map.size(), 0);
 });
