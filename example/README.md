@@ -1,8 +1,5 @@
-# Simple example
-
-- **elon.js** - main thread
-- **earn_in_crypto.js** - worker/thread
+# Example
 
 ```js
-node elon.js
+node main.js
 ```
