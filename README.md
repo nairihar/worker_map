@@ -59,52 +59,52 @@ Worker_map is much like JavaScript's regular Map.
 
 ### `map.set(key, value)`
 
-```
+```js
 map.set('name', 'John'); // true
 ```
 
 ### `map.get(key):`
 
-```
+```js
 const name = map.get('name'); // 'John'
 ```
 
 ### `map.delete(key):`
 
-```
+```js
 map.delete('name'); // true
 map.delete('something'); // false because it doesn't exist
 ```
 
 ### `map.clear():`
 
-```
+```js
 map.clear();
 map.size(); // 0
 ```
 
 ### `map.has(key)`
 
-```
+```js
 map.has('name'); // true
 map.has('country'); // false
 ```
 
 ### `map.size()`
 
-```
+```js
 map.has('size'); // 1
 ```
 
 ### `map.keys()`
 
-```
+```js
 map.keys(); // [ 'name' ]
 ```
 
 ### `map.entries()`
 
-```
+```js
 for (const [ key, value ] of map.entries()) {
   console.log(`${key}: ${value}`); // name: 'John'
 }
@@ -112,7 +112,7 @@ for (const [ key, value ] of map.entries()) {
 
 ### `map.forEach()`
 
-```
+```js
 map.forEach(function(key, value, map) {
   console.log(`${key}: ${value}`); // name: 'John'
 });
@@ -120,14 +120,14 @@ map.forEach(function(key, value, map) {
 
 ### `map.toSharedBuffer()`
 
-```
+```js
 const buffer = map.toSharedBuffer();
 const sameMap = new WorkerMap(buffer);
 ```
 
 ### `map.toObject()`
 
-```
+```js
 const mapObject = map.toObject(); // { ... }
 mapObject.name; // 'John'
 ```
