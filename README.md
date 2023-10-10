@@ -22,20 +22,20 @@ First, let's create a simple hash map structure in main process, then create a w
 
 ```js
 // main.js
-const { Worker } = require("worker_threads");
-const { WorkerMap } = require("worker_map");
+const { Worker } = require('worker_threads');
+const { WorkerMap } = require('worker_map');
 
 const map = new WorkerMap();
-map.set("balance", 100); // sync operation
+map.set('balance', 100); // sync operation
 
-new Worker("./worker.js", {
+new Worker('./worker.js', {
   workerData: {
     mapBuffer: map.toSharedBuffer(),
   },
 });
 
 setTimeout(() => {
-  console.log(map.get("balance")); // 200
+  console.log(map.get('balance')); // 200
 }, 50);
 ```
 
@@ -43,14 +43,14 @@ Now, let's access the shared hash map structure in the worker thread.
 
 ```js
 // worker.js
-const { WorkerMap } = require("worker_map");
-const { workerData } = require("worker_threads");
+const { WorkerMap } = require('worker_map');
+const { workerData } = require('worker_threads');
 
 const map = new WorkerMap(workerData.mapBuffer);
-console.log(map.get("balance")); // 100
+console.log(map.get('balance')); // 100
 
 // The change will be reflected in the main process as well
-map.set("balance", 200);
+map.set('balance', 200);
 ```
 
 ## Instance methods
