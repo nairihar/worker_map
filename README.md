@@ -18,7 +18,7 @@ npm i worker_map
 
 ## Basic Example
 
-First, let's create a simple hash map structure in main process, then create a worker thread and share the hash.
+First, let's create a simple `hash map` structure in the main process, then create a worker thread and share the `hash map`.
 
 ```js
 // main.js
@@ -39,7 +39,7 @@ setTimeout(() => {
 }, 50);
 ```
 
-Now, let's access the shared hash map structure in the worker thread.
+Now, let's access the shared `hash map` from the worker thread.
 
 ```js
 // worker.js
